@@ -1,6 +1,6 @@
 var map = L.map('map').setView([22.721, 88.480], 14);
 
-// Load map tiles
+// Load OpenStreetMap tiles
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 18,
 }).addTo(map);
@@ -11,18 +11,13 @@ fetch('https://cors-anywhere.herokuapp.com/' + sheetURL)
   .then(res => res.text())
   .then(csv => {
     const rows = csv.trim().split('\n');
-    console.log("Total Rows:", rows.length);
-
     const headers = rows[0].split(',');
-    console.log("Headers:", headers);
 
-    rows.slice(1).forEach((line, i) => {
+    rows.slice(1).forEach((line, index) => {
       const row = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
 
-      console.log(`Row ${i + 2}:`, row);
-
       if (!row || row.length < 4) {
-        console.warn(`Skipping row ${i + 2} - not enough columns`);
+        console.warn(`Skipping row ${index + 2}: Invalid format`);
         return;
       }
 
@@ -32,14 +27,14 @@ fetch('https://cors-anywhere.herokuapp.com/' + sheetURL)
       const desc = row[3].replace(/^"|"$/g, '');
 
       if (!isNaN(lat) && !isNaN(lng)) {
-        console.log(`✔️ Marker: ${name} (${lat}, ${lng})`);
-        L.marker([lat, lng]).addTo(map)
-          .bindPopup(`<b>${name}</b><br>${desc}`);
+        const marker = L.marker([lat, lng]).addTo(map);
+        marker.bindPopup(`<b>${name}</b><br>${desc}`);
+        marker.on('click', () => marker.openPopup());
       } else {
-        console.warn(`❌ Invalid coordinates at row ${i + 2}:`, row[1], row[2]);
+        console.warn(`Invalid coordinates for row ${index + 2}:`, lat, lng);
       }
     });
   })
   .catch(err => {
-    console.error("⚠️ Error fetching CSV:", err);
+    console.error("Error fetching CSV:", err);
   });
