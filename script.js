@@ -20,15 +20,16 @@ async function fetchPandalData() {
   }
 }
 
+let map;
+
 async function initMap() {
-  const map = new google.maps.Map(document.getElementById("map"), {
+  map = new google.maps.Map(document.getElementById("map"), {
     zoom: 14,
     center: { lat: 22.72, lng: 88.48 }
   });
 
   const pandals = await fetchPandalData();
-
-  let currentInfoWindow = null; // 👈 track open popup
+  let currentInfoWindow = new google.maps.InfoWindow(); // Reuse one instance
 
   pandals.forEach(pandal => {
     if (!isNaN(pandal.lat) && !isNaN(pandal.lng)) {
@@ -38,17 +39,11 @@ async function initMap() {
         title: pandal.name || "Unnamed Pandal"
       });
 
-      const infoWindow = new google.maps.InfoWindow({
-        content: `<strong>${pandal.name}</strong><br>${pandal.desc}`
-      });
+      const content = `<strong>${pandal.name}</strong><br>${pandal.desc || ""}`;
 
       marker.addListener("click", () => {
-        // 👇 close any previous open window
-        if (currentInfoWindow) {
-          currentInfoWindow.close();
-        }
-        infoWindow.open(map, marker);
-        currentInfoWindow = infoWindow; // 👈 store the current one
+        currentInfoWindow.setContent(content);
+        currentInfoWindow.open(map, marker);
       });
     }
   });
