@@ -32,10 +32,14 @@ fetch(proxy + sheetURL)
       const desc = row[3].replace(/^"|"$/g, '');
 
       if (!isNaN(lat) && !isNaN(lng)) {
-        const marker = L.marker([lat, lng]).addTo(map);
-
-        const popupHtml = `<div><h4>${name}</h4><p>${desc}</p></div>`;
-        marker.bindPopup(popupHtml);
+  console.log(`✔️ Marker: ${name} (${lat}, ${lng})`);
+  L.marker([lat, lng])
+    .addTo(map)
+    .bindPopup(`<b>${name}</b><br>${desc}`)
+    .on('click', function (e) {
+      this.openPopup();
+    });
+}
 
         // Manually open popup on click
         marker.on('click', () => {
