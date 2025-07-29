@@ -28,6 +28,8 @@ async function initMap() {
 
   const pandals = await fetchPandalData();
 
+  let currentInfoWindow = null; // 👈 track open popup
+
   pandals.forEach(pandal => {
     if (!isNaN(pandal.lat) && !isNaN(pandal.lng)) {
       const marker = new google.maps.Marker({
@@ -41,7 +43,12 @@ async function initMap() {
       });
 
       marker.addListener("click", () => {
+        // 👇 close any previous open window
+        if (currentInfoWindow) {
+          currentInfoWindow.close();
+        }
         infoWindow.open(map, marker);
+        currentInfoWindow = infoWindow; // 👈 store the current one
       });
     }
   });
