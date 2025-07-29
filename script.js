@@ -1,14 +1,19 @@
 var map = L.map('map').setView([22.721, 88.480], 14);
 
-// Load OpenStreetMap tiles
+// Add OpenStreetMap tiles
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 18,
 }).addTo(map);
 
+// Your public CSV export link
 const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTeFt8tTkSrxG1fw3BIfZLniav7NuCU1g9uQCTW0Rb8uGcDD2Jlhrq2yM3cmafbT2K-MdouBR3ngXHC/pub?output=csv';
 
-fetch('https://cors-anywhere.herokuapp.com/' + sheetURL)
-  .then(res => res.text())
+// Optional CORS proxy
+const proxy = 'https://cors-anywhere.herokuapp.com/';
+
+// Fetch the CSV
+fetch(proxy + sheetURL)
+  .then(response => response.text())
   .then(csv => {
     const rows = csv.trim().split('\n');
     const headers = rows[0].split(',');
@@ -17,7 +22,7 @@ fetch('https://cors-anywhere.herokuapp.com/' + sheetURL)
       const row = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
 
       if (!row || row.length < 4) {
-        console.warn(`Skipping row ${index + 2}: Invalid format`);
+        console.warn(`⛔ Skipping row ${index + 2}: Invalid format`);
         return;
       }
 
@@ -28,13 +33,21 @@ fetch('https://cors-anywhere.herokuapp.com/' + sheetURL)
 
       if (!isNaN(lat) && !isNaN(lng)) {
         const marker = L.marker([lat, lng]).addTo(map);
-        marker.bindPopup(`<b>${name}</b><br>${desc}`);
-        marker.on('click', () => marker.openPopup());
+
+        const popupHtml = `<div><h4>${name}</h4><p>${desc}</p></div>`;
+        marker.bindPopup(popupHtml);
+
+        // Manually open popup on click
+        marker.on('click', () => {
+          marker.openPopup();
+        });
+
+        console.log(`✅ Marker added: ${name} (${lat}, ${lng})`);
       } else {
-        console.warn(`Invalid coordinates for row ${index + 2}:`, lat, lng);
+        console.warn(`⚠️ Invalid coordinates at row ${index + 2}: ${lat}, ${lng}`);
       }
     });
   })
-  .catch(err => {
-    console.error("Error fetching CSV:", err);
+  .catch(error => {
+    console.error("⚠️ Error fetching CSV:", error);
   });
