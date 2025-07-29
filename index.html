@@ -1,51 +1,72 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Kali Puja Guide - Barasat</title>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Barasat Kali Puja Guide</title>
   <style>
-    #map { height: 100vh; width: 100%; }
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+    #map {
+      height: 90vh;
+      width: 100%;
+    }
+    h1 {
+      margin: 20px 0;
+    }
   </style>
 </head>
 <body>
+  <h1>Barasat Kali Puja Pandal Map</h1>
   <div id="map"></div>
 
-  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
   <script>
-    const map = L.map('map').setView([22.72, 88.48], 13); // Barasat area
+    async function fetchPandalData() {
+      const timestamp = new Date().getTime(); // 👈 cache buster
+      const sheetUrl = `https://docs.google.com/spreadsheets/d/1nryB_quFnJRQBbFe1XgI_XbpkGcRDm9rrrqQ4WfzYvo/gviz/tq?tqx=out:json&sheet=Sheet1&cacheBust=${timestamp}`;
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-
-    const sheetURL = "https://docs.google.com/spreadsheets/d/1nryB_quFnJRQBbFe1XgI_XbpkGcRDm9rrrqQ4WfzYvo/gviz/tq?tqx=out:json&sheet=Sheet1";
-
-    fetch(sheetURL)
-      .then(res => res.text())
-      .then(rep => {
-        const json = JSON.parse(rep.substring(47).slice(0, -2));
+      try {
+        const res = await fetch(sheetUrl);
+        const text = await res.text();
+        const json = JSON.parse(text.substr(47).slice(0, -2));
         const rows = json.table.rows;
 
-        rows.forEach((row, i) => {
-          const name = row.c[0]?.v || `Pandal ${i+1}`;
-          const lat = parseFloat(row.c[1]?.v);
-          const lng = parseFloat(row.c[2]?.v);
-          const desc = row.c[3]?.v || "No description";
+        return rows.map(row => ({
+          name: row.c[0]?.v,
+          lat: parseFloat(row.c[1]?.v),
+          lng: parseFloat(row.c[2]?.v),
+        }));
+      } catch (err) {
+        console.error("Failed to load pandal data", err);
+        return [];
+      }
+    }
 
-          if (!isNaN(lat) && !isNaN(lng)) {
-            L.marker([lat, lng])
-              .addTo(map)
-              .bindPopup(`<b>${name}</b><br>${desc}`);
-          }
-        });
-      })
-      .catch(error => {
-        console.error("Failed to fetch pandal data:", error);
-        alert("Failed to load pandal data. Please check the spreadsheet settings.");
+    async function initMap() {
+      const map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 14,
+        center: { lat: 22.72, lng: 88.48 }, // Barasat
       });
+
+      const pandals = await fetchPandalData();
+
+      pandals.forEach(pandal => {
+        if (!isNaN(pandal.lat) && !isNaN(pandal.lng)) {
+          new google.maps.Marker({
+            position: { lat: pandal.lat, lng: pandal.lng },
+            map,
+            title: pandal.name || "Unnamed Pandal",
+          });
+        }
+      });
+    }
   </script>
+
+  <!-- 🔑 Replace YOUR_GOOGLE_MAPS_API_KEY -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyANncA296TxyLTw2gNzK1_aXqEhPCH0RHc&callback=initMap" async defer></script>
 </body>
 </html>
