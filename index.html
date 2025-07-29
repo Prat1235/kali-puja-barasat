@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Kali Puja Guide - Barasat</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  <style>
+    #map { height: 100vh; width: 100%; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([22.72, 88.48], 13); // Barasat area
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const sheetURL = "https://docs.google.com/spreadsheets/d/1nryB_quFnJRQBbFe1XgI_XbpkGcRDm9rrrqQ4WfzYvo/gviz/tq?tqx=out:json&sheet=Sheet1";
+
+    fetch(sheetURL)
+      .then(res => res.text())
+      .then(rep => {
+        const json = JSON.parse(rep.substring(47).slice(0, -2));
+        const rows = json.table.rows;
+
+        rows.forEach((row, i) => {
+          const name = row.c[0]?.v || `Pandal ${i+1}`;
+          const lat = parseFloat(row.c[1]?.v);
+          const lng = parseFloat(row.c[2]?.v);
+          const desc = row.c[3]?.v || "No description";
+
+          if (!isNaN(lat) && !isNaN(lng)) {
+            L.marker([lat, lng])
+              .addTo(map)
+              .bindPopup(`<b>${name}</b><br>${desc}`);
+          }
+        });
+      })
+      .catch(error => {
+        console.error("Failed to fetch pandal data:", error);
+        alert("Failed to load pandal data. Please check the spreadsheet settings.");
+      });
+  </script>
+</body>
+</html>
