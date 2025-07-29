@@ -5,10 +5,10 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 18,
 }).addTo(map);
 
-// Public CSV URL (from Google Sheets → File > Share > Publish to Web)
+// Google Sheets CSV (Publish to Web → CSV link)
 const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTeFt8tTkSrxG1fw3BIfZLniav7NuCU1g9uQCTW0Rb8uGcDD2Jlhrq2yM3cmafbT2K-MdouBR3ngXHC/pub?output=csv';
 
-// Use a CORS proxy (for local dev only)
+// Use a CORS proxy (only if running locally — not needed for GitHub Pages)
 fetch('https://cors-anywhere.herokuapp.com/' + sheetURL)
   .then(res => res.text())
   .then(csv => {
@@ -27,6 +27,7 @@ fetch('https://cors-anywhere.herokuapp.com/' + sheetURL)
       if (!isNaN(lat) && !isNaN(lng)) {
         const marker = L.marker([lat, lng]).addTo(map);
         marker.bindPopup(`<strong>${name}</strong><br>${desc}`);
+        marker.on('click', () => marker.openPopup()); // ✅ Fix added
       }
     });
   })
